@@ -1,24 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Chat - Emmanuel Ministers</title>
+    <title>Chat Room</title>
 </head>
 <body>
-  <h2>Welcome, {{ session['username'] }}</h2>
-  <form method="POST">
-    <input type="text" name="message" placeholder="Enter message" required>
-    <button type="submit">Send</button>
-  </form>
-  
-  <h3>Recent Messages</h3>
-  <ul>
-    {% for msg in messages %}
-      <li><strong>{{ msg[1] }}:</strong> {{ msg[2] }}</li>
-    {% endfor %}
-  </ul>
+    <h1>Welcome, {{ username }}!</h1>
 
-  <br>
-  <a href="/logout">Logout</a>
+    <form method="POST" action="{{ url_for('chat', username=username) }}">
+        <input type="text" name="content" placeholder="Type your message..." required>
+        <button type="submit">Send</button>
+    </form>
+
+    <h3>Chat Messages:</h3>
+    <ul>
+        {% for msg in messages %}
+        <li><strong>{{ msg.username }}:</strong> {{ msg.content }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('home') }}">Back to Home</a>
 </body>
 </html>
