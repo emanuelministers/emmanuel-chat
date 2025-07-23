@@ -1,90 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chat Room</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            color: #333;
-            padding: 30px;
-            max-width: 600px;
-            margin: auto;
-        }
+  <meta charset="UTF-8">
+  <title>Chat - Emmanuel Chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e5ddd5;
+    }
 
-        h1, h3 {
-            text-align: center;
-            color: #444;
-        }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-        form {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    .chat-header {
+      background-color: #075E54;
+      color: white;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        input[type="text"] {
-            width: 80%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-right: 10px;
-        }
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
 
-        button {
-            padding: 10px 15px;
-            background-color: #0e76a8;
-            border: none;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .message {
+      max-width: 60%;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-radius: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      font-size: 14px;
+    }
 
-        button:hover {
-            background-color: #0b5e8a;
-        }
+    .message.you {
+      align-self: flex-end;
+      background-color: #dcf8c6;
+    }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
+    .message.other {
+      align-self: flex-start;
+      background-color: white;
+    }
 
-        li {
-            padding: 8px;
-            margin-bottom: 5px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
+    .chat-form {
+      display: flex;
+      padding: 10px;
+      background-color: #f0f0f0;
+      border-top: 1px solid #ccc;
+    }
 
-        a {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #0e76a8;
-            text-decoration: none;
-        }
+    .chat-form input[type="text"],
+    .chat-form input[type="hidden"] {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+      flex: 1;
+      margin-right: 10px;
+    }
 
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    .chat-form button {
+      padding: 10px 20px;
+      background-color: #075E54;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .chat-form button:hover {
+      background-color: #0b806e;
+    }
+  </style>
 </head>
 <body>
-    <h1>Welcome, {{ username }}!</h1>
+  <div class="chat-container">
+    <div class="chat-header">Emmanuel Chat Room</div>
     
-    <form method="POST" action="{{ url_for('chat', username=username) }}">
-        <input type="text" name="content" placeholder="Type your message..." required>
-        <button type="submit">Send</button>
+    <div class="messages">
+      {% for msg in messages %}
+        <div class="message {% if msg.username == session['username'] %}you{% else %}other{% endif %}">
+          <strong>{{ msg.username }}:</strong> {{ msg.content }}
+        </div>
+      {% endfor %}
+    </div>
+
+    <form method="POST" class="chat-form">
+      <input type="hidden" name="username" value="{{ session['username'] }}">
+      <input type="text" name="content" placeholder="Type your message..." required>
+      <button type="submit">Send</button>
     </form>
-
-    <h3>Chat Messages:</h3>
-    <ul>
-        {% for msg in messages %}
-        <li><strong>{{ msg.username }}:</strong> {{ msg.content }}</li>
-        {% endfor %}
-    </ul>
-
-    <a href="{{ url_for('home') }}">Back to Home</a>
+  </div>
 </body>
 </html>
