@@ -1,124 +1,84 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
+from flask import Flask, render_template, request, redirect, session, url_for
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 import os
 
 app = Flask(__name__)
-app.secret_key = 'super-secret-chat-key'
+app.secret_key = 'emmanuel_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chat.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-DB_NAME = 'messages.db'
+db = SQLAlchemy(app)
 
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    # Create users table
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-    )''')
-    # Create messages table
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        message TEXT
-    )''')
-    conn.commit()
-    conn.close()
+# Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.String(500), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Routes
 @app.route('/')
-def index():
+def home():
     if 'username' in session:
         return redirect(url_for('chat'))
-    return render_template('index.html')
+    return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        try:
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-            conn.commit()
-            conn.close()
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+        if username and password:
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                return "Username already exists!"
+            user = User(username=username, password=password)
+            db.session.add(user)
+            db.session.commit()
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            return "Username already exists."
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-        user = c.fetchone()
-        conn.close()
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
+        user = User.query.filter_by(username=username, password=password).first()
         if user:
-            session['username'] = username
+            session['username'] = user.username
             return redirect(url_for('chat'))
-        else:
-            return "Invalid credentials."
+        return "Invalid username or password"
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    
+
     if request.method == 'POST':
-        message = request.form['message']
-        c.execute("INSERT INTO messages (user, message) VALUES (?, ?)", (session['username'], message))
-        conn.commit()
+        content = request.form['message'].strip()
+        if content:
+            msg = Message(sender=session['username'], content=content)
+            db.session.add(msg)
+            db.session.commit()
+    messages = Message.query.order_by(Message.timestamp.asc()).all()
+    return render_template('chat.html', messages=messages, user=session['username'])
 
-    c.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 20")
-    messages = c.fetchall()
-    conn.close()
-    return render_template('chat.html', messages=messages)
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('index'))
-
+# Create the database
 if __name__ == '__main__':
-    init_db()
+    if not os.path.exists('chat.db'):
+        with app.app_context():
+            db.create_all()
+            print("✔️ chat.db created.")
     app.run(debug=True)
-    import sqlite3
-
-def init_db():
-    conn = sqlite3.connect('chat.db')
-    c = conn.cursor()
-    
-    # Create users table
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
-        )
-    ''')
-    
-    # Create messages table
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            message TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    print("✅ Database initialized successfully.")
-
-# Uncomment the line below and run app.py once to create the DB
-# init_db()
