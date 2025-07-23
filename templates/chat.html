@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat - Emmanuel Ministers</title>
+</head>
+<body>
+  <h2>Welcome, {{ session['username'] }}</h2>
+  <form method="POST">
+    <input type="text" name="message" placeholder="Enter message" required>
+    <button type="submit">Send</button>
+  </form>
+  
+  <h3>Recent Messages</h3>
+  <ul>
+    {% for msg in messages %}
+      <li><strong>{{ msg[1] }}:</strong> {{ msg[2] }}</li>
+    {% endfor %}
+  </ul>
+
+  <br>
+  <a href="/logout">Logout</a>
+</body>
+</html>
