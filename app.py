@@ -90,3 +90,35 @@ def logout():
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+    import sqlite3
+
+def init_db():
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    
+    # Create users table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+        )
+    ''')
+    
+    # Create messages table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            message TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    print("✅ Database initialized successfully.")
+
+# Uncomment the line below and run app.py once to create the DB
+# init_db()
