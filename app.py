@@ -82,3 +82,6 @@ if __name__ == '__main__':
             db.create_all()
             print("✔️ chat.db created.")
     app.run(debug=True)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
